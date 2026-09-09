@@ -267,11 +267,29 @@ h1, h2, h3, h4, .font-display {
   color: #ffffff;
 }
 
-/* Hero Section */
+/* Hero Section — subtle official portrait backdrop with a clean government-portal treatment */
 .hero-section {
+  position: relative;
+  isolation: isolate;
   padding: 40px 0 32px 0;
-  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.94) 42%, rgba(255, 255, 255, 0.78) 100%),
+    url('https://upload.wikimedia.org/wikipedia/commons/thumb/c4/Narendra_Modi_official_portrait%2C_2024.jpg/1280px-Narendra_Modi_official_portrait%2C_2024.jpg') right center / cover no-repeat,
+    #f1f5f9;
   border-bottom: 1px solid #e2e8f0;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(255, 153, 51, 0.05), transparent 38%, rgba(19, 136, 8, 0.05));
+}
+
+.hero-section > .app-container {
+  position: relative;
 }
 
 .hero-badge {
