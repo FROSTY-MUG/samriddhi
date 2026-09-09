@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { SectorType, GenderType } from '../types';
 import { Language } from '../utils/translations';
+import { AudioExplainButton } from './AudioExplainButton';
 
 interface VisualCardsProps {
   lang: Language;
@@ -31,6 +32,7 @@ interface VisualCardsProps {
   onSelectGender: (gender: GenderType) => void;
   onSpeakExplanation: (text: string) => void;
 }
+
 
 interface SectorVisualItem {
   id: SectorType;
@@ -252,14 +254,17 @@ export const VisualCards: React.FC<VisualCardsProps> = ({
 
       {/* 2. VISUAL PROJECT COST CHIPS (PRE-SET AMOUNTS) */}
       <div style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-          <span style={{ background: '#38bdf8', color: '#0b1120', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem' }}>2</span>
-          <h4 style={{ color: '#fff', fontSize: '1.05rem', fontWeight: 700 }}>
-            {lang === 'hi' ? 'कितना पैसा / ऋण चाहिए? (लागत चुनें)' :
-             lang === 'ta' ? 'எவ்வளவு கடன் தேவை? (மதிப்பை தேர்ந்தெடுக்கவும்)' :
-             lang === 'mr' ? 'किती कर्ज हवे आहे? (रक्कम निवडा)' :
-             'How much money/cost is needed? (Quick Pick)'}
-          </h4>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ background: '#0284c7', color: '#fff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem' }}>2</span>
+            <h4 style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700 }}>
+              {lang === 'hi' ? 'कितना पैसा / ऋण चाहिए? (लागत चुनें)' :
+               lang === 'ta' ? 'எவ்வளவு கடன் தேவை? (மதிப்பை தேர்ந்தெடுக்கவும்)' :
+               lang === 'mr' ? 'किती कर्ज हवे आहे? (रक्कम निवडा)' :
+               'How much money/cost is needed? (Quick Pick)'}
+            </h4>
+          </div>
+          <AudioExplainButton termKey="promoter_equity" lang={lang} label={lang === 'hi' ? 'लागत व हिस्सा समझें' : 'Explain Cost'} />
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -272,14 +277,6 @@ export const VisualCards: React.FC<VisualCardsProps> = ({
             { val: 2000000, label: '₹20.00 Lakh', descHi: 'उच्च शिक्षा (इंजीनियरिंग)', descEn: 'Higher Education Inland' },
             { val: 5000000, label: '₹50.00 Lakh', descHi: 'बड़ी फैक्ट्री / उद्योग', descEn: 'Factory / Term Loan' }
           ].map((item, index, arr) => {
-            /**
-             * DYNAMIC VOICE INPUT HIGHLIGHTING LOGIC
-             * 
-             * Voice inputs often contain arbitrary numbers (e.g. "I need 1.2 Lakhs").
-             * Instead of failing to select a visual card because 120000 !== 140000,
-             * we dynamically calculate the absolute difference between the spoken/selected cost 
-             * and our predefined visual buckets. We then snap the visual selection to the closest matching tier.
-             */
             const costs = arr.map(a => a.val);
             const closestCost = costs.reduce((prev, curr) => Math.abs(curr - selectedCost) < Math.abs(prev - selectedCost) ? curr : prev);
             const isSelected = closestCost === item.val;
@@ -290,9 +287,9 @@ export const VisualCards: React.FC<VisualCardsProps> = ({
                 type="button"
                 onClick={() => onSelectCost(item.val)}
                 style={{
-                  background: isSelected ? 'rgba(56, 189, 248, 0.25)' : 'rgba(30, 41, 59, 0.7)',
-                  border: isSelected ? '2px solid #38bdf8' : '1px solid var(--color-border)',
-                  color: isSelected ? '#38bdf8' : '#e2e8f0',
+                  background: isSelected ? '#e0f2fe' : '#ffffff',
+                  border: isSelected ? '2px solid #0284c7' : '1px solid #cbd5e1',
+                  color: isSelected ? '#0369a1' : '#334155',
                   borderRadius: '12px',
                   padding: '10px 16px',
                   cursor: 'pointer',
@@ -304,8 +301,8 @@ export const VisualCards: React.FC<VisualCardsProps> = ({
                   transition: 'all 0.15s'
                 }}
               >
-                <strong style={{ fontSize: '1rem', color: isSelected ? '#38bdf8' : '#fff' }}>{item.label}</strong>
-                <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                <strong style={{ fontSize: '1rem', color: isSelected ? '#0369a1' : '#0f172a' }}>{item.label}</strong>
+                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
                   {lang === 'hi' ? item.descHi : item.descEn}
                 </span>
               </button>
@@ -316,15 +313,19 @@ export const VisualCards: React.FC<VisualCardsProps> = ({
 
       {/* 3. VISUAL INCOME CHECK (CRITICAL BENCHMARK: <= ₹5 LAKHS) */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-          <span style={{ background: '#38bdf8', color: '#0b1120', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem' }}>3</span>
-          <h4 style={{ color: '#fff', fontSize: '1.05rem', fontWeight: 700 }}>
-            {lang === 'hi' ? 'परिवार की सालाना आय (₹5 लाख तक होने पर 90% सरकारी छूट)' :
-             lang === 'ta' ? 'குடும்ப ஆண்டு வருமானம் (₹5 லட்சம் வரை மட்டுமே சலுகை)' :
-             lang === 'mr' ? 'कौटुंबिक वार्षिक उत्पन्न (₹५ लाखांपर्यंत ९०% शासकीय सवलत)' :
-             'Annual Family Income (Must be up to ₹5.00 Lakhs for Concessions)'}
-          </h4>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ background: '#0284c7', color: '#fff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem' }}>3</span>
+            <h4 style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700 }}>
+              {lang === 'hi' ? 'परिवार की सालाना आय (₹5 लाख तक होने पर 90% सरकारी छूट)' :
+               lang === 'ta' ? 'குடும்ப ஆண்டு வருமானம் (₹5 லட்சம் வரை மட்டுமே சலுகை)' :
+               lang === 'mr' ? 'कौटुंबिक वार्षिक उत्पन्न (₹५ लाखांपर्यंत ९०% शासकीय सवलत)' :
+               'Annual Family Income (Must be up to ₹5.00 Lakhs for Concessions)'}
+            </h4>
+          </div>
+          <AudioExplainButton termKey="income_limit" lang={lang} label={lang === 'hi' ? 'आय सीमा समझें' : 'Explain Income'} />
         </div>
+
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
           {[

@@ -17,6 +17,8 @@ import { ChannelPartner, Scheme } from '../types';
 import { formatIndianCurrency } from '../utils/calculator';
 import { TranslationStrings } from '../utils/translations';
 
+import { generateDossierPdf } from '../utils/pdfGenerator';
+
 interface ApplicationDossierModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -29,6 +31,7 @@ interface ApplicationDossierModalProps {
   applicantName?: string;
   t: TranslationStrings;
 }
+
 
 export const ApplicationDossierModal: React.FC<ApplicationDossierModalProps> = ({
   isOpen,
@@ -175,9 +178,30 @@ export const ApplicationDossierModal: React.FC<ApplicationDossierModalProps> = (
           <button className="btn-secondary" onClick={onClose}>
             Close
           </button>
+          <button
+            className="btn-primary"
+            style={{ background: '#0284c7' }}
+            onClick={() => {
+              if (scheme) {
+                generateDossierPdf({
+                  applicantName,
+                  scheme,
+                  partner,
+                  projectCost,
+                  loanAmount,
+                  promoterEquity,
+                  interestRate,
+                  routingToken
+                });
+              }
+            }}
+          >
+            <Download size={16} />
+            <span>Download PDF Dossier</span>
+          </button>
           <button className="btn-primary" onClick={handlePrint}>
             <Printer size={16} />
-            <span>Print / Save as PDF</span>
+            <span>Print</span>
           </button>
         </div>
       </div>

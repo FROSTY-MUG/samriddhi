@@ -1,24 +1,42 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  Sparkles, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Calculator, 
-  MapPin, 
-  FileText, 
-  Percent, 
-  Calendar, 
+import {
+  Sparkles,
+  CheckCircle2,
+  AlertTriangle,
+  Calculator,
+  MapPin,
+  FileText,
+  Percent,
+  Calendar,
   ArrowRight,
   RefreshCcw,
   IndianRupee,
   Users,
-  Volume2
+  Volume2,
+  Key,
+  FileUp,
+  Cpu,
+  Settings,
+  TrendingUp,
+  Lightbulb
 } from 'lucide-react';
 import { UserInputProfile, SchemeRecommendation, SectorType, EducationLevel, GenderType, Scheme } from '../types';
 import { recommendSchemes } from '../utils/aiRecommender';
 import { formatIndianCurrency } from '../utils/calculator';
 import { TranslationStrings, Language } from '../utils/translations';
+import {
+  executeRAGSchemeMatcher,
+  AIRAGResponse
+} from '../utils/aiMultiProviderRAG';
 import { VisualCards } from './VisualCards';
+import { AudioExplainButton } from './AudioExplainButton';
+import { SchemeComparison } from './SchemeComparison';
+import { EligibilityChecklist } from './EligibilityChecklist';
+import { AdvancedCalculatorPreview } from './AdvancedCalculatorPreview';
+import { STATES, districtsForState, detectLocationFromCoordinates } from '../utils/locationData';
+import { Navigation, MapPinned, GitCompare } from 'lucide-react';
+
+
 import { VoiceSpeechBar } from './VoiceSpeechBar';
 import confetti from 'canvas-confetti';
 
@@ -30,6 +48,8 @@ interface RecommenderSectionProps {
   onViewDocuments: (scheme: Scheme) => void;
   onSpeakText: (text: string) => void;
   isSpeaking: boolean;
+  onOpenOcr?: () => void;
+  onOpenAiSettings?: () => void;
 }
 
 export const RecommenderSection: React.FC<RecommenderSectionProps> = ({
@@ -39,7 +59,9 @@ export const RecommenderSection: React.FC<RecommenderSectionProps> = ({
   onSelectSchemeForLocator,
   onViewDocuments,
   onSpeakText,
-  isSpeaking
+  isSpeaking,
+  onOpenOcr,
+  onOpenAiSettings
 }) => {
   const [profile, setProfile] = useState<UserInputProfile>({
     sector: 'micro_enterprise',
@@ -54,6 +76,27 @@ export const RecommenderSection: React.FC<RecommenderSectionProps> = ({
   });
 
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(true);
+  const [userQueryText, setUserQueryText] = useState<string>('');
+  const [locationMessage, setLocationMessage] = useState<string>('');
+  const [showAdvancedCalculator, setShowAdvancedCalculator] = useState(false);
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationMessage('Location is not supported. Please select your state and district.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+      const location = detectLocationFromCoordinates(coords.latitude, coords.longitude);
+      if (!location) {
+        setLocationMessage('GPS found your position, but the local catalog has no mapped district yet.');
+        return;
+      }
+      setProfile(previous => ({ ...previous, state: location.state, district: location.district }));
+      setLocationMessage(`Detected ${location.district}, ${location.state}`);
+    }, () => setLocationMessage('Location permission was unavailable. Choose your state and district manually.'));
+  };
+  const [isAiProcessing, setIsAiProcessing] = useState<boolean>(false);
+  const [ragResult, setRagResult] = useState<AIRAGResponse | null>(null);
 
   // Handle voice transcribed profile update
   const handleVoiceProfileParsed = (extracted: Partial<UserInputProfile>) => {
@@ -98,24 +141,221 @@ export const RecommenderSection: React.FC<RecommenderSectionProps> = ({
 
   const isIncomeEligible = profile.annualIncome <= 500000;
 
+  const handleRunAiNlp = async (queryToRun?: string) => {
+    const q = queryToRun || userQueryText;
+    if (!q.trim()) return;
+    setIsAiProcessing(true);
+    try {
+      const res = await executeRAGSchemeMatcher(q);
+      setRagResult(res);
+      setProfile(prev => ({ ...prev, ...res.profile }));
+      confetti({ particleCount: 50, spread: 60, origin: { y: 0.5 } });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
   return (
     <section id="recommender-section" style={{ padding: '36px 0 60px 0' }}>
       <div className="app-container">
         <div className="section-header">
           <div className="section-tag">
             <Sparkles size={16} />
-            <span>AI Matching Engine</span>
+            <span>AI Natural Language Engine</span>
           </div>
           <h2 className="section-heading">{t.recHeader}</h2>
           <p className="section-subheading">{t.recSubheader}</p>
         </div>
+
+        {/* State, district and implementing-agency context */}
+        <div className="glass-card" style={{ padding: '20px', marginBottom: '24px', border: '1px solid rgba(16, 185, 129, 0.35)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#34d399', fontWeight: 800, marginBottom: '12px' }}>
+            <MapPinned size={18} />
+            <span>{lang === 'hi' ? 'राज्य और जिला आधारित योजना खोज' : 'State & district-specific scheme routing'}</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '10px' }}>
+            <select className="form-select" value={profile.state} onChange={(e) => { const state = e.target.value; setProfile(previous => ({ ...previous, state, district: districtsForState(state)[0] || '' })); }}>
+              {STATES.map(state => <option key={state} value={state}>{state}</option>)}
+            </select>
+            <select className="form-select" value={profile.district} onChange={(e) => setProfile(previous => ({ ...previous, district: e.target.value }))}>
+              {districtsForState(profile.state).map(district => <option key={district} value={district}>{district}</option>)}
+            </select>
+            <button type="button" className="btn-secondary" onClick={handleDetectLocation} style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}><Navigation size={15} /> Use GPS</button>
+          </div>
+          <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap', color: '#94a3b8', fontSize: '0.76rem' }}>
+            <span>Local SCA: {profile.state} Scheduled Caste Finance Corporation</span><span>• District Industries Centre: {profile.district}</span><span>• PSB / RRB / CSC routing</span>
+          </div>
+          {locationMessage && <div style={{ color: '#a7f3d0', fontSize: '0.75rem', marginTop: '8px' }}>{locationMessage}</div>}
+        </div>
+
+        {/* AI Multi-Provider RAG Query & Live Intelligence Box */}
+        <div className="glass-card" style={{ padding: '24px', marginBottom: '24px', border: '1px solid rgba(56, 189, 248, 0.35)', background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(11, 17, 32, 0.95))' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#38bdf8', fontWeight: 800, fontSize: '1rem' }}>
+              <Cpu size={20} />
+              <span>{lang === 'hi' ? 'स्मार्ट AI RAG योजना खोज (Grok, Gemini, OpenRouter, Offline)' : 'Multi-Provider AI RAG Scheme Intelligence'}</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {onOpenAiSettings && (
+                <button
+                  onClick={onOpenAiSettings}
+                  className="btn-secondary"
+                  style={{ padding: '6px 12px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px', borderColor: '#38bdf8' }}
+                >
+                  <Settings size={14} color="#38bdf8" />
+                  <span>{lang === 'hi' ? 'AI प्रदाता बदलें' : 'AI Engine Settings'}</span>
+                </button>
+              )}
+              {onOpenOcr && (
+                <button
+                  onClick={onOpenOcr}
+                  className="btn-secondary"
+                  style={{ padding: '6px 12px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <FileUp size={14} color="#10b981" />
+                  <span>{lang === 'hi' ? 'दस्तावेज़ OCR' : 'Document OCR'}</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Query Prompt Chips */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px' }}>
+            <span style={{ fontSize: '0.72rem', color: '#64748b', alignSelf: 'center', marginRight: '4px' }}>
+              {lang === 'hi' ? 'त्वरित उदाहरण:' : 'Quick Prompts:'}
+            </span>
+            {[
+              { en: 'Women Tailoring & Boutique ₹1.4 Lakh', hi: 'महिला सिलाई बुटीक 1.4 लाख' },
+              { en: 'Dairy Farming & Cattle ₹2.0 Lakh', hi: 'डेयरी व पशुपालन 2 लाख' },
+              { en: 'E-Rickshaw & Solar Unit ₹3.0 Lakh', hi: 'ई-रिक्शा / सोलर यूनिट 3 लाख' },
+              { en: 'Higher Education B.Tech ₹10 Lakh', hi: 'उच्च शिक्षा बीटेक 10 लाख' }
+            ].map((chip, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  const text = lang === 'hi' ? chip.hi : chip.en;
+                  setUserQueryText(text);
+                  handleRunAiNlp(text);
+                }}
+                style={{
+                  background: 'rgba(30, 41, 59, 0.7)',
+                  border: '1px solid rgba(56, 189, 248, 0.2)',
+                  color: '#cbd5e1',
+                  fontSize: '0.72rem',
+                  padding: '4px 10px',
+                  borderRadius: '20px',
+                  cursor: 'pointer'
+                }}
+              >
+                {lang === 'hi' ? chip.hi : chip.en}
+              </button>
+            ))}
+          </div>
+
+          {/* Natural Language Query Bar */}
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+            <input
+              type="text"
+              className="form-input"
+              style={{ flex: 1, fontSize: '0.92rem', padding: '12px 16px' }}
+              placeholder={lang === 'hi'
+                ? 'मातृभाषा या टूटी-फूटी अंग्रेजी में लिखें: "मैं महिला हूँ, मुझे 1.4 लाख का सिलाई लोन चाहिए"'
+                : 'Speak or type naturally: "I am a woman starting a dairy farm with 2 lakh budget in UP"'
+              }
+              value={userQueryText}
+              onChange={(e) => setUserQueryText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleRunAiNlp()}
+            />
+            <button
+              onClick={() => handleRunAiNlp()}
+              disabled={isAiProcessing}
+              className="btn-primary"
+              style={{ whiteSpace: 'nowrap', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Sparkles size={16} />
+              <span>{isAiProcessing ? (lang === 'hi' ? 'RAG विश्लेषण जारी...' : 'RAG Matching...') : (lang === 'hi' ? 'AI खोज' : 'RAG Match')}</span>
+            </button>
+          </div>
+
+          {/* RAG Results & Insights Display */}
+          {ragResult && (
+            <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+              {/* Summary Card */}
+              <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid #38bdf8', padding: '14px', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase' }}>
+                    {lang === 'hi' ? '🎯 योजना मिलान निष्कर्ष' : '🎯 Scheme Match Assessment'}
+                  </span>
+                  <span style={{ fontSize: '0.68rem', background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', padding: '2px 8px', borderRadius: '10px' }}>
+                    {ragResult.providerUsed} ({ragResult.latencyMs}ms)
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.85rem', color: '#e2e8f0', margin: '4px 0 8px 0', lineHeight: '1.4' }}>
+                  {lang === 'hi' ? ragResult.hindiSummary : ragResult.naturalLanguageSummary}
+                </p>
+                <button
+                  onClick={() => onSpeakText(lang === 'hi' ? ragResult.hindiSummary : ragResult.naturalLanguageSummary)}
+                  className="btn-secondary"
+                  style={{ padding: '3px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <Volume2 size={12} />
+                  <span>{lang === 'hi' ? 'सुनें' : 'Listen'}</span>
+                </button>
+              </div>
+
+              {/* Micro-Investment Plan Card */}
+              <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid #10b981', padding: '14px', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', color: '#10b981', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                  <TrendingUp size={14} />
+                  <span>{lang === 'hi' ? '💡 निवेश योजना व पूंजी आवंटन' : '💡 Micro Investment Plan'}</span>
+                </div>
+                <p style={{ fontSize: '0.85rem', color: '#cbd5e1', margin: '4px 0 8px 0', lineHeight: '1.4' }}>
+                  {lang === 'hi' ? ragResult.hindiInvestmentPlan : ragResult.investmentPlan}
+                </p>
+                <button
+                  onClick={() => onSpeakText(lang === 'hi' ? ragResult.hindiInvestmentPlan : ragResult.investmentPlan)}
+                  className="btn-secondary"
+                  style={{ padding: '3px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <Volume2 size={12} />
+                  <span>{lang === 'hi' ? 'सुनें' : 'Listen'}</span>
+                </button>
+              </div>
+
+              {/* Loan & Repayment Strategy Card */}
+              <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid #f59e0b', padding: '14px', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', color: '#f59e0b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                  <Lightbulb size={14} />
+                  <span>{lang === 'hi' ? '📋 ऋण व मोरेटोरियम रणनीति' : '📋 Loan & Moratorium Strategy'}</span>
+                </div>
+                <p style={{ fontSize: '0.85rem', color: '#cbd5e1', margin: '4px 0 8px 0', lineHeight: '1.4' }}>
+                  {lang === 'hi' ? ragResult.hindiLoanAdvice : ragResult.loanAdvice}
+                </p>
+                <button
+                  onClick={() => onSpeakText(lang === 'hi' ? ragResult.hindiLoanAdvice : ragResult.loanAdvice)}
+                  className="btn-secondary"
+                  style={{ padding: '3px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <Volume2 size={12} />
+                  <span>{lang === 'hi' ? 'सुनें' : 'Listen'}</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+
 
         {/* VOICE-ENABLED REAL-TIME SPEECH BAR */}
         <VoiceSpeechBar
           lang={lang}
           onVoiceProfileParsed={handleVoiceProfileParsed}
           onReadAloud={() => {
-            const summarySpeech = lang === 'hi' 
+            const summarySpeech = lang === 'hi'
               ? `आपके लिए सर्वश्रेष्ठ योजना है: ${recommendations[0]?.scheme?.hindiName || 'सूक्ष्म वित्त योजना'}। इसमें 90 प्रतिशत तक रियायती ऋण सहायता उपलब्ध है।`
               : `The best matching scheme for you is ${recommendations[0]?.scheme?.name || 'Micro Finance Scheme'} with up to 90 percent concessional assistance.`;
             onSpeakText(summarySpeech);
@@ -356,47 +596,60 @@ export const RecommenderSection: React.FC<RecommenderSectionProps> = ({
                       {/* Key Financial Snapshot */}
                       <div className="scheme-stats-row">
                         <div className="stat-item">
-                          <div className="stat-item-val" style={{ color: '#38bdf8' }}>
+                          <div className="stat-item-val" style={{ color: '#0284c7' }}>
                             {effectiveInterestRate}%
                           </div>
-                          <div className="stat-item-lbl">{t.effectiveRate}</div>
+                          <div className="stat-item-lbl" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span>{t.effectiveRate}</span>
+                            <AudioExplainButton termKey="concessional_rate" lang={lang} />
+                          </div>
                         </div>
 
                         <div className="stat-item">
-                          <div className="stat-item-val" style={{ color: '#34d399' }}>
+                          <div className="stat-item-val" style={{ color: '#16a34a' }}>
                             {scheme.maxAssistancePct}%
                           </div>
-                          <div className="stat-item-lbl">{t.maxAssistance}</div>
+                          <div className="stat-item-lbl" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span>{t.maxAssistance}</span>
+                            <AudioExplainButton termKey="max_assistance" lang={lang} />
+                          </div>
                         </div>
 
                         <div className="stat-item">
-                          <div className="stat-item-val" style={{ color: '#fbbf24' }}>
+                          <div className="stat-item-val" style={{ color: '#ea580c' }}>
                             {formatIndianCurrency(estimatedMonthlyEmi)}
                           </div>
-                          <div className="stat-item-lbl">{t.estEmi}</div>
+                          <div className="stat-item-lbl" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span>{t.estEmi}</span>
+                            <AudioExplainButton termKey="monthly_emi" lang={lang} />
+                          </div>
                         </div>
                       </div>
 
                       {/* Assistance vs Margin Breakdown */}
-                      <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '10px 14px', borderRadius: '8px', marginBottom: '14px', fontSize: '0.8rem' }}>
+                      <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '10px 14px', borderRadius: '8px', marginBottom: '14px', fontSize: '0.8rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                          <span style={{ color: '#94a3b8' }}>Eligible Concessional Loan:</span>
-                          <strong style={{ color: '#38bdf8' }}>{formatIndianCurrency(eligibleLoanAmount)}</strong>
+                          <span style={{ color: '#64748b' }}>Eligible Concessional Loan (90%):</span>
+                          <strong style={{ color: '#0284c7' }}>{formatIndianCurrency(eligibleLoanAmount)}</strong>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#94a3b8' }}>Beneficiary Margin (Promoter):</span>
-                          <strong style={{ color: '#fbbf24' }}>{formatIndianCurrency(promoterContribution)}</strong>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <span style={{ color: '#64748b' }}>Beneficiary Margin (10% Promoter):</span>
+                            <AudioExplainButton termKey="promoter_equity" lang={lang} />
+                          </div>
+                          <strong style={{ color: '#ea580c' }}>{formatIndianCurrency(promoterContribution)}</strong>
                         </div>
                       </div>
 
                       {/* Moratorium & Tenure Tag */}
-                      <div style={{ display: 'flex', gap: '10px', fontSize: '0.78rem', color: '#cbd5e1', marginBottom: '16px' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255, 255, 255, 0.05)', padding: '4px 8px', borderRadius: '4px' }}>
-                          <Calendar size={13} style={{ color: '#38bdf8' }} />
+                      <div style={{ display: 'flex', gap: '10px', fontSize: '0.78rem', color: '#475569', marginBottom: '16px', alignItems: 'center' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#f1f5f9', border: '1px solid #e2e8f0', padding: '4px 8px', borderRadius: '6px' }}>
+                          <Calendar size={13} style={{ color: '#0284c7' }} />
                           Moratorium: {scheme.maxMoratoriumMonths} Months
                         </span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255, 255, 255, 0.05)', padding: '4px 8px', borderRadius: '4px' }}>
-                          <Calendar size={13} style={{ color: '#34d399' }} />
+                        <AudioExplainButton termKey="moratorium_period" lang={lang} />
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#f1f5f9', border: '1px solid #e2e8f0', padding: '4px 8px', borderRadius: '6px' }}>
+                          <Calendar size={13} style={{ color: '#16a34a' }} />
                           Tenure: Up to {scheme.maxTenureYears} Yrs
                         </span>
                       </div>
@@ -457,8 +710,17 @@ export const RecommenderSection: React.FC<RecommenderSectionProps> = ({
                 );
               })}
             </div>
+            <SchemeComparison recommendations={recommendations} />
+            {recommendations[0] && <EligibilityChecklist scheme={recommendations[0].scheme} profile={profile} />}
           </div>
         )}
+
+        <div className="glass-card" style={{ padding: '20px', marginTop: '24px' }}>
+          <button type="button" className="btn-secondary" onClick={() => setShowAdvancedCalculator(value => !value)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <GitCompare size={16} /> {showAdvancedCalculator ? 'Hide advanced offline calculator' : 'Open advanced offline calculator'}
+          </button>
+          {showAdvancedCalculator && <AdvancedCalculatorPreview projectCost={profile.estimatedCost} />}
+        </div>
       </div>
     </section>
   );

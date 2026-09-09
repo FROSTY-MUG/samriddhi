@@ -13,11 +13,14 @@ import {
   Sparkles
 } from 'lucide-react';
 import { calculateConcessionalLoan, formatIndianCurrency } from '../utils/calculator';
-import { TranslationStrings } from '../utils/translations';
-import { Scheme } from '../types';
+import { TranslationStrings, Language } from '../utils/translations';
+import { Scheme, AmortizationRow } from '../types';
+import { AudioExplainButton } from './AudioExplainButton';
+
 
 interface CalculatorSectionProps {
   t: TranslationStrings;
+  lang?: Language;
   prefillScheme?: Scheme | null;
   initialCost?: number;
   initialRate?: number;
@@ -28,6 +31,7 @@ interface CalculatorSectionProps {
 
 export const CalculatorSection: React.FC<CalculatorSectionProps> = ({
   t,
+  lang = 'hi',
   prefillScheme,
   initialCost = 500000,
   initialRate = 6.5,
@@ -35,6 +39,7 @@ export const CalculatorSection: React.FC<CalculatorSectionProps> = ({
   initialMoratorium = 6,
   onNavigateToLocator
 }) => {
+
   const [projectCost, setProjectCost] = useState<number>(initialCost);
   const [assistancePct, setAssistancePct] = useState<number>(90);
   const [interestRate, setInterestRate] = useState<number>(initialRate);
@@ -108,8 +113,11 @@ export const CalculatorSection: React.FC<CalculatorSectionProps> = ({
             {/* 1. Project Cost */}
             <div className="form-group" style={{ marginBottom: '24px' }}>
               <div className="form-label">
-                <span>{t.lblCostSlider}</span>
-                <strong style={{ color: '#38bdf8', fontSize: '1.15rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span>{t.lblCostSlider}</span>
+                  <AudioExplainButton termKey="promoter_equity" lang={lang} />
+                </div>
+                <strong style={{ color: '#0284c7', fontSize: '1.15rem' }}>
                   {formatIndianCurrency(projectCost)}
                 </strong>
               </div>
@@ -128,9 +136,9 @@ export const CalculatorSection: React.FC<CalculatorSectionProps> = ({
                     key={val}
                     type="button"
                     style={{
-                      background: projectCost === val ? 'rgba(56, 189, 248, 0.25)' : 'rgba(15, 23, 42, 0.6)',
-                      border: '1px solid var(--color-border)',
-                      color: projectCost === val ? '#38bdf8' : '#94a3b8',
+                      background: projectCost === val ? '#e0f2fe' : '#ffffff',
+                      border: projectCost === val ? '2px solid #0284c7' : '1px solid #cbd5e1',
+                      color: projectCost === val ? '#0369a1' : '#475569',
                       fontSize: '0.75rem',
                       padding: '4px 10px',
                       borderRadius: '6px',
@@ -147,8 +155,11 @@ export const CalculatorSection: React.FC<CalculatorSectionProps> = ({
             {/* 2. Assistance Share Percentage (90% standard) */}
             <div className="form-group" style={{ marginBottom: '24px' }}>
               <div className="form-label">
-                <span>{t.lblAssistancePct} (Apex Loan vs Beneficiary)</span>
-                <strong style={{ color: '#34d399', fontSize: '1.05rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span>{t.lblAssistancePct}</span>
+                  <AudioExplainButton termKey="max_assistance" lang={lang} />
+                </div>
+                <strong style={{ color: '#16a34a', fontSize: '1.05rem' }}>
                   {assistancePct}% Assistance (10% Promoter)
                 </strong>
               </div>
@@ -161,7 +172,7 @@ export const CalculatorSection: React.FC<CalculatorSectionProps> = ({
                 value={assistancePct}
                 onChange={(e) => setAssistancePct(Number(e.target.value))}
               />
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
                 * Under NSFDC & SCA guidelines, concessional assistance covers up to 90% of total unit cost.
               </span>
             </div>
@@ -169,8 +180,11 @@ export const CalculatorSection: React.FC<CalculatorSectionProps> = ({
             {/* 3. Interest Rate */}
             <div className="form-group" style={{ marginBottom: '24px' }}>
               <div className="form-label">
-                <span>{t.lblRateSlider}</span>
-                <strong style={{ color: '#fbbf24', fontSize: '1.15rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span>{t.lblRateSlider}</span>
+                  <AudioExplainButton termKey="concessional_rate" lang={lang} />
+                </div>
+                <strong style={{ color: '#ea580c', fontSize: '1.15rem' }}>
                   {interestRate}% p.a.
                 </strong>
               </div>
@@ -189,9 +203,9 @@ export const CalculatorSection: React.FC<CalculatorSectionProps> = ({
                     key={rate}
                     type="button"
                     style={{
-                      background: interestRate === rate ? 'rgba(245, 158, 11, 0.25)' : 'rgba(15, 23, 42, 0.6)',
-                      border: '1px solid var(--color-border)',
-                      color: interestRate === rate ? '#fbbf24' : '#94a3b8',
+                      background: interestRate === rate ? '#ffedd5' : '#ffffff',
+                      border: interestRate === rate ? '2px solid #ea580c' : '1px solid #cbd5e1',
+                      color: interestRate === rate ? '#c2410c' : '#475569',
                       fontSize: '0.75rem',
                       padding: '4px 10px',
                       borderRadius: '6px',
@@ -210,7 +224,7 @@ export const CalculatorSection: React.FC<CalculatorSectionProps> = ({
               <div className="form-group">
                 <div className="form-label">
                   <span>{t.lblTenureSlider}</span>
-                  <strong style={{ color: '#fff' }}>{tenureYears} Years</strong>
+                  <strong style={{ color: '#0f172a' }}>{tenureYears} Years</strong>
                 </div>
                 <input
                   type="range"
@@ -225,8 +239,11 @@ export const CalculatorSection: React.FC<CalculatorSectionProps> = ({
 
               <div className="form-group">
                 <div className="form-label">
-                  <span>{t.lblMoratoriumSlider}</span>
-                  <strong style={{ color: '#38bdf8' }}>{moratoriumMonths} Months</strong>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span>{t.lblMoratoriumSlider}</span>
+                    <AudioExplainButton termKey="moratorium_period" lang={lang} />
+                  </div>
+                  <strong style={{ color: '#0284c7' }}>{moratoriumMonths} Months</strong>
                 </div>
                 <input
                   type="range"
@@ -246,10 +263,13 @@ export const CalculatorSection: React.FC<CalculatorSectionProps> = ({
 
           {/* Results Summary Card */}
           <div className="calc-summary-panel">
-            <div className="emi-highlight-box">
-              <div className="emi-subtext">{t.resMonthlyEmi}</div>
-              <div className="emi-amount">{formatIndianCurrency(summary.monthlyEmi)}</div>
-              <div style={{ fontSize: '0.75rem', color: '#34d399', marginTop: '4px', fontWeight: 600 }}>
+            <div className="emi-highlight-box" style={{ background: '#f0f9ff', border: '2px solid #0284c7', borderRadius: '12px', padding: '20px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <div className="emi-subtext" style={{ color: '#0369a1', fontWeight: 700 }}>{t.resMonthlyEmi}</div>
+                <AudioExplainButton termKey="monthly_emi" lang={lang} label={lang === 'hi' ? 'किस्त समझें' : 'Explain EMI'} />
+              </div>
+              <div className="emi-amount" style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a' }}>{formatIndianCurrency(summary.monthlyEmi)}</div>
+              <div style={{ fontSize: '0.75rem', color: '#16a34a', marginTop: '4px', fontWeight: 600 }}>
                 Effective repayment over {(summary.tenureYears * 12) - summary.moratoriumMonths} active months
               </div>
             </div>
@@ -376,7 +396,7 @@ export const CalculatorSection: React.FC<CalculatorSectionProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {summary.schedule.map((row) => (
+                    {summary.schedule.map((row: any) => (
                       <tr
                         key={row.month}
                         style={{
