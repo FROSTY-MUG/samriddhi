@@ -12,6 +12,7 @@ export interface AIProviderConfig {
   grokKey?: string;
   openrouterKey?: string;
   openrouterModel?: string;
+  voiceEngine?: 'instant' | 'gemini';
 }
 
 export interface RAGMatchedScheme {
@@ -38,10 +39,11 @@ const STORAGE_KEY = 'samriddhi_ai_config';
 
 const DEFAULT_CONFIG: AIProviderConfig = {
   provider: 'grok',
+  voiceEngine: 'instant',
   // Keys are intentionally opt-in. Never ship provider secrets in a browser bundle.
   geminiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
   grokKey: import.meta.env.VITE_GROK_API_KEY || import.meta.env.VITE_GROQ_API_KEY || '',
- openrouterKey: import.meta.env.VITE_OPENROUTER_API_KEY || '',
+  openrouterKey: import.meta.env.VITE_OPENROUTER_API_KEY || '',
   openrouterModel: 'meta-llama/llama-3.3-70b-instruct'
 };
 

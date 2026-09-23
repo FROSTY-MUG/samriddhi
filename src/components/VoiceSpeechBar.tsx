@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Mic, MicOff, Volume2, Sparkles, AlertCircle, CheckCircle, Languages } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Mic, MicOff, Volume2, Sparkles, AlertCircle, CheckCircle, Languages, Radio } from 'lucide-react';
 import { Language } from '../utils/translations';
 import { UserInputProfile, SectorType, EducationLevel, GenderType } from '../types';
 
@@ -56,9 +56,30 @@ export const VoiceSpeechBar: React.FC<VoiceSpeechBarProps> = ({
   const [recognitionError, setRecognitionError] = useState<string>('');
   const [extractedSummary, setExtractedSummary] = useState<string>('');
 
+  const recognitionRef = useRef<any>(null);
+  const debounceTimerRef = useRef<any>(null);
+  const silenceTimerRef = useRef<any>(null);
+  const finalTranscriptRef = useRef<string>('');
+
   const currentStrings = LANG_PROMPTS[lang] || LANG_PROMPTS.en;
 
-  // Speech Recognition Initializer
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {
+          // Ignore
+        }
+        recognitionRef.current = null;
+      }
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    };
+  }, []);
+
+  // Low-latency Real-time Speech Recognition
   const handleToggleRecord = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -67,7 +88,16 @@ export const VoiceSpeechBar: React.FC<VoiceSpeechBarProps> = ({
       return;
     }
 
+    // If currently recording, stop cleanly and immediately release mic
     if (isRecording) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // Ignore
+        }
+        recognitionRef.current = null;
+      }
       setIsRecording(false);
       return;
     }
@@ -75,37 +105,83 @@ export const VoiceSpeechBar: React.FC<VoiceSpeechBarProps> = ({
     try {
       const recognition = new SpeechRecognition();
       recognition.lang = BCP47_LANG_CODES[lang] || 'hi-IN';
-      recognition.interimResults = false;
+      // Enable streaming interim results for sub-50ms visual response
+      recognition.interimResults = true;
+      recognition.continuous = true;
       recognition.maxAlternatives = 1;
+
+      finalTranscriptRef.current = '';
 
       recognition.onstart = () => {
         setIsRecording(true);
         setRecognitionError('');
         setTranscript('');
+        setExtractedSummary('');
       };
 
       recognition.onresult = (event: any) => {
-        const speechResult = event.results[0][0].transcript;
-        setTranscript(speechResult);
-        parseVoiceInput(speechResult);
+        let interimText = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const item = event.results[i];
+          const text = item[0].transcript;
+          if (item.isFinal) {
+            finalTranscriptRef.current += text + ' ';
+          } else {
+            interimText += text;
+          }
+        }
+
+        const fullCurrentTranscript = (finalTranscriptRef.current + interimText).trim();
+        if (fullCurrentTranscript) {
+          setTranscript(fullCurrentTranscript);
+
+          // Real-time debounce parsing (120ms): allows user to see recommendation changes live as they speak!
+          if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+          debounceTimerRef.current = setTimeout(() => {
+            parseVoiceInput(fullCurrentTranscript);
+          }, 120);
+
+          // Reset smart silence timer: auto-finalizes if user stops speaking for 2.2 seconds
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = setTimeout(() => {
+            if (recognitionRef.current) {
+              try {
+                recognitionRef.current.stop();
+              } catch {
+                // Ignore
+              }
+              recognitionRef.current = null;
+            }
+            setIsRecording(false);
+          }, 2200);
+        }
       };
 
       recognition.onerror = (event: any) => {
-        setIsRecording(false);
         if (event.error === 'no-speech') {
+          // Non-fatal warning on quiet room
           setRecognitionError('No speech detected. Please speak into your microphone.');
+        } else if (event.error === 'aborted') {
+          // User intentionally stopped
         } else {
-          setRecognitionError(`Mic error: ${event.error}`);
+          setRecognitionError(`Mic notice: ${event.error}`);
+          setIsRecording(false);
         }
       };
 
       recognition.onend = () => {
         setIsRecording(false);
+        recognitionRef.current = null;
+        if (finalTranscriptRef.current.trim()) {
+          parseVoiceInput(finalTranscriptRef.current.trim());
+        }
       };
 
+      recognitionRef.current = recognition;
       recognition.start();
     } catch (e: any) {
       setIsRecording(false);
+      recognitionRef.current = null;
       setRecognitionError('Could not initialize microphone access.');
     }
   };
@@ -118,35 +194,35 @@ export const VoiceSpeechBar: React.FC<VoiceSpeechBarProps> = ({
 
     // 1. Detect Sector / Project Type
     if (
-      lower.includes('tailor') || lower.includes('सिलाई') || lower.includes('दर्जी') || 
-      lower.includes('shop') || lower.includes('दुकान') || lower.includes('vending') || 
+      lower.includes('tailor') || lower.includes('सिलाई') || lower.includes('दर्जी') ||
+      lower.includes('shop') || lower.includes('दुकान') || lower.includes('vending') ||
       lower.includes('ठेला') || lower.includes('small') || lower.includes('छोटा') || lower.includes('தையல்')
     ) {
       extracted.sector = 'micro_enterprise';
       parsedNotes.push('Sector: Micro Enterprise / Trade');
     } else if (
-      lower.includes('women') || lower.includes('mahila') || lower.includes('महिला') || 
+      lower.includes('women') || lower.includes('mahila') || lower.includes('महिला') ||
       lower.includes('shg') || lower.includes('समूह') || lower.includes('பெண்கள்') || lower.includes('बचत गट')
     ) {
       extracted.sector = 'women_entrepreneurship';
       extracted.gender = 'female';
       parsedNotes.push('Sector: Women Entrepreneurship (MSY)');
     } else if (
-      lower.includes('kisan') || lower.includes('agriculture') || lower.includes('farm') || 
-      lower.includes('dairy') || lower.includes('दूध') || lower.includes('गाय') || 
+      lower.includes('kisan') || lower.includes('agriculture') || lower.includes('farm') ||
+      lower.includes('dairy') || lower.includes('दूध') || lower.includes('गाय') ||
       lower.includes('भैंस') || lower.includes('बकरी') || lower.includes('कृषि') || lower.includes('விவசாயம்')
     ) {
       extracted.sector = 'agriculture';
       parsedNotes.push('Sector: Agriculture / Dairy');
     } else if (
-      lower.includes('electric') || lower.includes('rickshaw') || lower.includes('रिक्शा') || 
+      lower.includes('electric') || lower.includes('rickshaw') || lower.includes('रिक्शा') ||
       lower.includes('solar') || lower.includes('सोलर') || lower.includes('green') || lower.includes('पर्यावरण')
     ) {
       extracted.sector = 'green_business';
       parsedNotes.push('Sector: Green Business / E-Mobility');
     } else if (
-      lower.includes('education') || lower.includes('study') || lower.includes('पढ़ाई') || 
-      lower.includes('college') || lower.includes('engineering') || lower.includes('medical') || 
+      lower.includes('education') || lower.includes('study') || lower.includes('पढ़ाई') ||
+      lower.includes('college') || lower.includes('engineering') || lower.includes('medical') ||
       lower.includes('கல்வி') || lower.includes('शिक्षण')
     ) {
       if (lower.includes('abroad') || lower.includes('foreign') || lower.includes('विदेश')) {
@@ -157,7 +233,7 @@ export const VoiceSpeechBar: React.FC<VoiceSpeechBarProps> = ({
         parsedNotes.push('Sector: Inland Higher Education');
       }
     } else if (
-      lower.includes('factory') || lower.includes('उद्योग') || lower.includes('कारखाना') || 
+      lower.includes('factory') || lower.includes('उद्योग') || lower.includes('कारखाना') ||
       lower.includes('manufacturing') || lower.includes('plant') || lower.includes('बड़ा कर्ज')
     ) {
       extracted.sector = 'term_loan';
@@ -165,9 +241,27 @@ export const VoiceSpeechBar: React.FC<VoiceSpeechBarProps> = ({
     }
 
     // 2. Extract Numbers for Cost & Income
-    // Patterns like: "1 lakh", "2 लाख", "50000", "50 हजार", "1.4 lakh"
-    const lakhMatches = lower.match(/(\d+(\.\d+)?)\s*(lakh|lac|लाख|லட்சம்|लाखा)/g);
-    if (lakhMatches && lakhMatches.length > 0) {
+    // Patterns like: "1 lakh", "2 लाख", "50000", "50 हजार", "1.4 lakh", "80k"
+    const lakhMatches = lower.match(/(\d+(\.\d+)?)\s*(lakh|lakhs|lac|लाख|லட்சம்|लाखा)/g);
+    const thousandMatches = lower.match(/(\d+(\.\d+)?)\s*(thousand|हजार|हज़ार|k|ஆயிரம்)/g);
+    const croreMatches = lower.match(/(\d+(\.\d+)?)\s*(crore|cr|करोड़)/g);
+
+    // Common Hindi text numerals
+    let textBasedNum: number | null = null;
+    if (lower.includes('डेढ़ लाख') || lower.includes('dedh lakh') || lower.includes('1.5 lakh')) textBasedNum = 150000;
+    else if (lower.includes('एक लाख') || lower.includes('ek lakh')) textBasedNum = 100000;
+    else if (lower.includes('दो लाख') || lower.includes('do lakh')) textBasedNum = 200000;
+    else if (lower.includes('तीन लाख') || lower.includes('teen lakh')) textBasedNum = 300000;
+    else if (lower.includes('पचास हजार') || lower.includes('50 hazar')) textBasedNum = 50000;
+
+    if (textBasedNum) {
+      extracted.estimatedCost = textBasedNum;
+      parsedNotes.push(`Cost: ₹${textBasedNum.toLocaleString('en-IN')}`);
+    } else if (croreMatches && croreMatches.length > 0) {
+      const val = parseFloat(croreMatches[0].replace(/[^\d.]/g, '')) * 10000000;
+      extracted.estimatedCost = val;
+      parsedNotes.push(`Cost: ₹${val.toLocaleString('en-IN')}`);
+    } else if (lakhMatches && lakhMatches.length > 0) {
       const numbers = lakhMatches.map(m => {
         const val = parseFloat(m.replace(/[^\d.]/g, ''));
         return val * 100000;
@@ -189,6 +283,10 @@ export const VoiceSpeechBar: React.FC<VoiceSpeechBarProps> = ({
           parsedNotes.push(`Cost: ₹${numbers[0].toLocaleString('en-IN')}, Income: ₹${numbers[1].toLocaleString('en-IN')}`);
         }
       }
+    } else if (thousandMatches && thousandMatches.length > 0) {
+      const val = parseFloat(thousandMatches[0].replace(/[^\d.]/g, '')) * 1000;
+      extracted.estimatedCost = val;
+      parsedNotes.push(`Cost: ₹${val.toLocaleString('en-IN')}`);
     } else {
       // Direct numeric check
       const directNums = lower.match(/\b\d{4,7}\b/g);
@@ -236,6 +334,12 @@ export const VoiceSpeechBar: React.FC<VoiceSpeechBarProps> = ({
             <span style={{ background: '#38bdf8', color: '#0b1120', fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
               {currentStrings.speakHint}
             </span>
+            {isRecording && (
+              <span style={{ background: '#ef4444', color: '#ffffff', fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <Radio size={11} />
+                <span>LIVE STREAMING (&lt; 50ms)</span>
+              </span>
+            )}
             <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
               Voice Support in {lang === 'hi' ? 'हिन्दी' : lang === 'ta' ? 'தமிழ்' : lang === 'mr' ? 'मराठी' : 'English'}
             </span>

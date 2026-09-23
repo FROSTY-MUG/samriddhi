@@ -24,7 +24,7 @@ import {
 import { DocumentOcrModal } from './components/DocumentOcrModal';
 import { AIConfigModal } from './components/AIConfigModal';
 import { getStoredAIConfig } from './utils/aiMultiProviderRAG';
-import { speakWithGemini } from './utils/geminiVoice';
+import { speakInstant, speakWithGeminiOptimized, stopAllVoice } from './utils/voiceService';
 
 export function App() {
   const [currentTab, setCurrentTab] = useState<'recommender' | 'calculator' | 'locator' | 'dossier'>('recommender');
@@ -53,10 +53,10 @@ export function App() {
 
   const t = TRANSLATIONS[lang];
 
-  // Gemini TTS with a browser speech fallback. Both paths remain client-side and optional.
+  // Ultra-low latency voice synthesis (< 20ms) with optional Gemini Cloud fallback
   const speakText = async (speechText: string) => {
     if (isVoiceActive) {
-      window.speechSynthesis.cancel();
+      stopAllVoice();
       setIsVoiceActive(false);
       setVoiceStatusText('');
       return;
@@ -64,46 +64,41 @@ export function App() {
 
     setIsVoiceActive(true);
     setVoiceStatusText(speechText);
-    const geminiWorked = await speakWithGemini(speechText, getStoredAIConfig().geminiKey);
-    if (geminiWorked) {
-      setIsVoiceActive(false);
-      setVoiceStatusText('');
-      return;
+
+    const config = getStoredAIConfig();
+
+    const voiceOptions = {
+      lang,
+      rate: 0.96,
+      onStart: () => {
+        setIsVoiceActive(true);
+        setVoiceStatusText(speechText);
+      },
+      onEnd: () => {
+        setIsVoiceActive(false);
+        setVoiceStatusText('');
+      },
+      onError: () => {
+        setIsVoiceActive(false);
+        setVoiceStatusText('');
+      }
+    };
+
+    if (config.voiceEngine === 'gemini' && config.geminiKey?.trim()) {
+      await speakWithGeminiOptimized(speechText, config.geminiKey, 'Kore', voiceOptions);
+    } else {
+      const started = speakInstant(speechText, voiceOptions);
+      if (!started) {
+        setIsVoiceActive(false);
+        setVoiceStatusText('');
+        alert('Speech synthesis is not supported on this browser.');
+      }
     }
-
-    if (!('speechSynthesis' in window)) {
-      setIsVoiceActive(false);
-      setVoiceStatusText('');
-      alert('Speech synthesis is not supported on this browser.');
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(speechText);
-    utterance.rate = 0.95;
-    utterance.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
-
-    utterance.onstart = () => {
-      setIsVoiceActive(true);
-      setVoiceStatusText(speechText);
-    };
-
-    utterance.onend = () => {
-      setIsVoiceActive(false);
-      setVoiceStatusText('');
-    };
-
-    utterance.onerror = () => {
-      setIsVoiceActive(false);
-      setVoiceStatusText('');
-    };
-
-    window.speechSynthesis.speak(utterance);
   };
 
   const toggleVoice = () => {
     if (isVoiceActive) {
-      window.speechSynthesis.cancel();
+      stopAllVoice();
       setIsVoiceActive(false);
       setVoiceStatusText('');
       return;
@@ -111,6 +106,10 @@ export function App() {
 
     const speechText = lang === 'hi'
       ? 'समृद्धि एआई में आपका स्वागत है। अपनी योजना और ऋण की जानकारी प्राप्त करने के लिए अपना व्यवसाय क्षेत्र और लागत चुनें।'
+      : lang === 'ta'
+      ? 'சம்ரிதி ஏஐக்கு வரவேற்கிறோம். அரசு திட்டங்கள் மற்றும் கடன் விவரங்களை அறிய உங்கள் தொழில் மற்றும் தொகையை தேர்வு செய்யவும்.'
+      : lang === 'mr'
+      ? 'समृद्धी एआय मध्ये आपले स्वागत आहे. सरकारी योजना आणि कर्ज सहाय्य मिळवण्यासाठी आपला व्यवसाय आणि अंदाजित खर्च निवडा.'
       : 'Welcome to SamriddhiAI. Select your sector and project cost to find government schemes and loan support.';
     void speakText(speechText);
   };

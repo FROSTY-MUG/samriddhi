@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Bot, 
-  Key, 
-  Sparkles, 
-  ShieldCheck, 
-  CheckCircle2, 
-  AlertCircle, 
-  Zap, 
-  Cpu, 
+import {
+  Bot,
+  Key,
+  Sparkles,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  Zap,
+  Cpu,
   Server,
   Layers,
   X
 } from 'lucide-react';
-import { 
-  AIProviderConfig, 
-  AIProviderType, 
-  getStoredAIConfig, 
-  saveAIConfig 
+import {
+  AIProviderConfig,
+  AIProviderType,
+  getStoredAIConfig,
+  saveAIConfig
 } from '../utils/aiMultiProviderRAG';
 import { Language } from '../utils/translations';
 
@@ -57,9 +57,9 @@ export const AIConfigModal: React.FC<AIConfigModalProps> = ({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div 
-        className="modal-content" 
-        onClick={(e) => e.stopPropagation()} 
+      <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
         style={{ maxWidth: '620px', padding: '28px', background: 'rgba(15, 23, 42, 0.96)', backdropFilter: 'blur(20px)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '20px' }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -76,8 +76,8 @@ export const AIConfigModal: React.FC<AIConfigModalProps> = ({
               </p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer', padding: '4px' }}
           >
             <X size={20} />
@@ -87,7 +87,7 @@ export const AIConfigModal: React.FC<AIConfigModalProps> = ({
         {/* Provider Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '20px' }}>
           {/* Grok */}
-          <div 
+          <div
             onClick={() => setConfig({ ...config, provider: 'grok' })}
             style={{
               padding: '14px',
@@ -108,7 +108,7 @@ export const AIConfigModal: React.FC<AIConfigModalProps> = ({
           </div>
 
           {/* Gemini */}
-          <div 
+          <div
             onClick={() => setConfig({ ...config, provider: 'gemini' })}
             style={{
               padding: '14px',
@@ -129,7 +129,7 @@ export const AIConfigModal: React.FC<AIConfigModalProps> = ({
           </div>
 
           {/* OpenRouter */}
-          <div 
+          <div
             onClick={() => setConfig({ ...config, provider: 'openrouter' })}
             style={{
               padding: '14px',
@@ -150,7 +150,7 @@ export const AIConfigModal: React.FC<AIConfigModalProps> = ({
           </div>
 
           {/* Offline Fallback */}
-          <div 
+          <div
             onClick={() => setConfig({ ...config, provider: 'offline' })}
             style={{
               padding: '14px',
@@ -246,11 +246,64 @@ export const AIConfigModal: React.FC<AIConfigModalProps> = ({
                 <ShieldCheck size={16} />
                 {lang === 'hi' ? 'सक्रिय ऑफ़लाइन सुरक्षा मोड' : 'Active Offline Privacy Mode'}
               </div>
-              {lang === 'hi' 
-                ? 'सभी योजना मिलान, ब्याज दर और ईएमआई गणना आपके डिवाइस पर ही तुरंत प्रोसेस होती है।' 
+              {lang === 'hi'
+                ? 'सभी योजना मिलान, ब्याज दर और ईएमआई गणना आपके डिवाइस पर ही तुरंत प्रोसेस होती है।'
                 : 'All scheme matches, interest computations and investment plans execute directly in-browser.'}
             </div>
           )}
+
+          {/* Voice Engine & Latency Configuration */}
+          <div style={{ borderTop: '1px solid #334155', paddingTop: '16px', marginTop: '4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label style={{ fontSize: '0.82rem', color: '#e2e8f0', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Zap size={14} color="#38bdf8" />
+                <span>{lang === 'hi' ? 'वॉयस इंजन गति व प्रतिक्रिया (Voice Latency)' : 'Voice Engine & Latency Preference'}</span>
+              </label>
+              <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '4px', background: (config.voiceEngine || 'instant') === 'instant' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.2)', color: (config.voiceEngine || 'instant') === 'instant' ? '#34d399' : '#38bdf8', fontWeight: 700 }}>
+                {(config.voiceEngine || 'instant') === 'instant' ? '⚡ < 20ms Ultra-Low Latency' : '☁️ Neural Cloud TTS'}
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div
+                onClick={() => setConfig({ ...config, voiceEngine: 'instant' })}
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  border: (config.voiceEngine || 'instant') === 'instant' ? '2px solid #10b981' : '1px solid #334155',
+                  background: (config.voiceEngine || 'instant') === 'instant' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(30, 41, 59, 0.5)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#fff', marginBottom: '2px' }}>
+                  ⚡ {lang === 'hi' ? 'त्वरित देशी वॉयस (< 20ms)' : 'Instant Native Voice (< 20ms)'}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#94a3b8', lineHeight: '1.3' }}>
+                  {lang === 'hi' ? 'शून्य विलंबता, स्थानीय डिवाइस सिंथेसिस (अनुशंसित)' : 'Zero latency, immediate playback, no network waiting (Recommended)'}
+                </div>
+              </div>
+
+              <div
+                onClick={() => setConfig({ ...config, voiceEngine: 'gemini' })}
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  border: config.voiceEngine === 'gemini' ? '2px solid #38bdf8' : '1px solid #334155',
+                  background: config.voiceEngine === 'gemini' ? 'rgba(56, 189, 248, 0.12)' : 'rgba(30, 41, 59, 0.5)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#fff', marginBottom: '2px' }}>
+                  🎙️ {lang === 'hi' ? 'Google जेमिनी न्यूरल वॉयस' : 'Gemini Cloud TTS'}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#94a3b8', lineHeight: '1.3' }}>
+                  {lang === 'hi' ? 'उच्च गुणवत्ता, इन-मेमोरी कैशिंग एवं 2.5s सुरक्षित टाइमआउट' : 'High fidelity neural voice with audio caching & 2.5s safe fallback'}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -258,8 +311,8 @@ export const AIConfigModal: React.FC<AIConfigModalProps> = ({
           <button className="btn-secondary" onClick={onClose}>
             {lang === 'hi' ? 'रद्द करें' : 'Cancel'}
           </button>
-          <button 
-            className="btn-primary" 
+          <button
+            className="btn-primary"
             onClick={handleSave}
             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >

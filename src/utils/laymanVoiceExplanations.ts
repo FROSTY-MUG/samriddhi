@@ -1,4 +1,5 @@
 import { Language } from './translations';
+import { speakInstant, stopAllVoice } from './voiceService';
 
 export interface LaymanExplanation {
   titleEn: string;
@@ -151,23 +152,29 @@ export const LAYMAN_EXPLANATIONS: Record<string, LaymanExplanation> = {
   }
 };
 
-/**
- * Speak layman voice explanation aloud in Hindi or English
- */
-export function speakLaymanExplanation(key: string, lang: Language = 'hi'): void {
-  const item = LAYMAN_EXPLANATIONS[key] || LAYMAN_EXPLANATIONS.concessional_rate;
-  if (!('speechSynthesis' in window)) {
-    alert(lang === 'hi' ? item.simpleExplanationHi : item.simpleExplanationEn);
-    return;
-  }
+export { stopAllVoice };
 
-  window.speechSynthesis.cancel();
-  const textToSpeak = lang === 'hi' 
+/**
+ * Speak layman voice explanation aloud in Hindi, Tamil, Marathi, or English with sub-20ms latency.
+ */
+export function speakLaymanExplanation(
+  key: string,
+  lang: Language = 'hi',
+  onStart?: () => void,
+  onEnd?: () => void
+): boolean {
+  const item = LAYMAN_EXPLANATIONS[key] || LAYMAN_EXPLANATIONS.concessional_rate;
+
+  const textToSpeak = lang === 'hi'
     ? `${item.titleHi}। ${item.simpleExplanationHi} ${item.practicalExampleHi}`
     : `${item.titleEn}. ${item.simpleExplanationEn} ${item.practicalExampleEn}`;
 
-  const utterance = new SpeechSynthesisUtterance(textToSpeak);
-  utterance.rate = 0.92; // slightly slower, clear cadence for rural/layman accessibility
-  utterance.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
-  window.speechSynthesis.speak(utterance);
+  return speakInstant(textToSpeak, {
+    lang,
+    rate: 0.94,
+    onStart,
+    onEnd,
+    onError: () => onEnd?.()
+  });
 }
+

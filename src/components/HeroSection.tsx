@@ -77,20 +77,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
               <div style={{ display: 'flex', gap: '18px', alignItems: 'flex-start', marginBottom: '16px' }}>
                 <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Narendra_Modi_official_portrait%2C_2024.jpg/440px-Narendra_Modi_official_portrait%2C_2024.jpg"
+                  src="/modi-portrait.png"
                   alt="Shri Narendra Modi, Prime Minister of India"
                   style={{
-                    width: '100px',
-                    height: '120px',
+                    width: '104px',
+                    height: '126px',
                     objectFit: 'cover',
-                    borderRadius: '10px',
+                    objectPosition: 'center top',
+                    borderRadius: '8px',
                     border: '2px solid #e2e8f0',
                     boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
                     flexShrink: 0
-                  }}
-                  onError={(e) => {
-                    // Fallback to high quality alternate portrait if wikimedia link throttled
-                    (e.target as HTMLImageElement).src = 'https://www.pmindia.gov.in/wp-content/uploads/2022/12/PM-Modi-official-photo.jpg';
                   }}
                 />
 
@@ -113,11 +110,34 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
               <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Landmark size={14} color="#0284c7" />
+                  <Landmark size={14} color="#138808" />
                   <span>Digital India & Jan Dhan Mission</span>
                 </div>
-                <span style={{ fontWeight: 700, color: '#0284c7' }}>Govt of India Initiative</span>
+                <span style={{ fontWeight: 700, color: '#138808' }}>भारत सरकार • Govt of India Initiative</span>
               </div>
+            </div>
+          </div>
+
+          {/* Official Tricolor Accreditation Banner */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginTop: '10px', padding: '12px 16px', background: 'linear-gradient(90deg, #fff7ed, #ffffff 40%, #f0fdf4)', border: '1px solid #fed7aa', borderLeft: '4px solid #f97316', borderRadius: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true">
+                <circle cx="50" cy="50" r="44" fill="none" stroke="#0369a1" strokeWidth="7"/>
+                <circle cx="50" cy="50" r="30" fill="none" stroke="#0369a1" strokeWidth="2"/>
+                {Array.from({ length: 12 }).map((_, i) => {
+                  const a = (i * 30 * Math.PI) / 180;
+                  return <line key={i} x1={50 + 38 * Math.cos(a)} y1={50 + 38 * Math.sin(a)} x2={50 + 44 * Math.cos(a)} y2={50 + 44 * Math.sin(a)} stroke="#0369a1" strokeWidth="3"/>;
+                })}
+                <line x1="50" y1="22" x2="50" y2="78" stroke="#0369a1" strokeWidth="2"/>
+                <line x1="22" y1="50" x2="78" y2="50" stroke="#0369a1" strokeWidth="2"/>
+              </svg>
+              <div style={{ fontSize: '0.78rem', color: '#334155', lineHeight: '1.45' }}>
+                <strong style={{ color: '#b45309' }}>National Policy Accreditation:</strong><br/>
+                Aligned with Digital India • Make in India • Jan Dhan & Financial Inclusion drives of the Government of India
+              </div>
+            </div>
+            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#15803d', textAlign: 'right' }}>
+              मेरी योजना, मेरा अधिकार<br/>My Scheme • My Right
             </div>
           </div>
         </div>

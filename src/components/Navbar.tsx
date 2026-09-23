@@ -1,13 +1,13 @@
 import React from 'react';
-import { 
-  Compass, 
-  Calculator, 
-  MapPin, 
-  FileCheck2, 
-  Globe, 
-  Volume2, 
-  VolumeX, 
-  Cpu, 
+import {
+  Compass,
+  Calculator,
+  MapPin,
+  FileCheck2,
+  Globe,
+  Volume2,
+  VolumeX,
+  Cpu,
   Sparkles,
   ShieldCheck
 } from 'lucide-react';
@@ -39,6 +39,9 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Tricolor National Stripe */}
       <div className="gov-top-stripe" />
 
+      {/* Second thin navy accent stripe for authentic gov-portal depth */}
+      <div style={{ height: '2px', background: 'linear-gradient(90deg, #0f172a 0%, #0369a1 50%, #0f172a 100%)' }} />
+
       {/* Official Government Utility Header Bar */}
       <div className="gov-utility-bar">
         <div className="app-container gov-utility-content">
@@ -50,6 +53,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span style={{ color: '#cbd5e1' }}>
               सामाजिक न्याय एवं अधिकारिता मंत्रालय | Ministry of Social Justice & Empowerment
             </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(250, 132, 50, 0.18)', border: '1px solid rgba(250, 132, 50, 0.4)', color: '#fdba74', padding: '1px 7px', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.04em' }}>
+              डिजिटल इंडिया • DIGITAL INDIA
+            </span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -58,7 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
             <span style={{ color: '#64748b' }}>•</span>
             {onOpenAiSettings && (
-              <button 
+              <button
                 onClick={onOpenAiSettings}
                 style={{ background: 'transparent', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}
               >
@@ -94,7 +100,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div>
                 <div className="brand-title">
                   <span>SamriddhiAI</span>
-                  <span style={{ fontSize: '0.65rem', background: '#0284c7', color: '#fff', padding: '2px 8px', borderRadius: '4px', fontWeight: 800 }}>
+                  <span style={{ fontSize: '0.65rem', background: 'linear-gradient(135deg, #f97316, #f43f5e 45%, #138808)', color: '#fff', padding: '2px 8px', borderRadius: '4px', fontWeight: 800, letterSpacing: '0.03em' }}>
                     GOVT PORTAL
                   </span>
                 </div>

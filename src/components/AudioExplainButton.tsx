@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Volume2, HelpCircle, X, Sparkles, CheckCircle2 } from 'lucide-react';
-import { LAYMAN_EXPLANATIONS, speakLaymanExplanation } from '../utils/laymanVoiceExplanations';
+import React, { useState, useRef } from 'react';
+import { Volume2, HelpCircle, X, Sparkles, CheckCircle2, Square } from 'lucide-react';
+import { LAYMAN_EXPLANATIONS, speakLaymanExplanation, stopAllVoice } from '../utils/laymanVoiceExplanations';
 import { Language } from '../utils/translations';
 
 interface AudioExplainButtonProps {
@@ -17,11 +17,29 @@ export const AudioExplainButton: React.FC<AudioExplainButtonProps> = ({
   inline = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const speakingRef = useRef(false);
   const data = LAYMAN_EXPLANATIONS[termKey] || LAYMAN_EXPLANATIONS.concessional_rate;
+
+  const handleListen = () => {
+    if (speakingRef.current) {
+      stopAllVoice();
+      speakingRef.current = false;
+      setIsSpeaking(false);
+      return;
+    }
+    speakLaymanExplanation(termKey, lang, () => {
+      speakingRef.current = true;
+      setIsSpeaking(true);
+    }, () => {
+      speakingRef.current = false;
+      setIsSpeaking(false);
+    });
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    speakLaymanExplanation(termKey, lang);
+    handleListen();
     setIsOpen(!isOpen);
   };
 
@@ -106,10 +124,13 @@ export const AudioExplainButton: React.FC<AudioExplainButtonProps> = ({
 
           <button
             type="button"
-            onClick={() => speakLaymanExplanation(termKey, lang)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleListen();
+            }}
             style={{
               width: '100%',
-              background: '#0284c7',
+              background: isSpeaking ? '#dc2626' : '#0284c7',
               color: '#ffffff',
               border: 'none',
               borderRadius: '6px',
@@ -120,11 +141,12 @@ export const AudioExplainButton: React.FC<AudioExplainButtonProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px'
+              gap: '6px',
+              transition: 'background 0.15s ease'
             }}
           >
-            <Volume2 size={14} />
-            <span>{lang === 'hi' ? 'दोबारा आवाज में सुनें' : 'Listen Again in Voice'}</span>
+            {isSpeaking ? <Square size={14} /> : <Volume2 size={14} />}
+            <span>{isSpeaking ? (lang === 'hi' ? 'आवाज रोकें' : 'Stop Audio') : (lang === 'hi' ? 'दोबारा आवाज में सुनें' : 'Listen Again in Voice')}</span>
           </button>
         </div>
       )}
