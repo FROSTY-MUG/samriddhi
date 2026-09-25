@@ -1,16 +1,18 @@
 services:
+  # ========================================================
+  # 1. SamriddhiAI FastAPI Core Engine (Web Service)
+  # ========================================================
   - type: web
     name: samriddhiai-backend
     runtime: python
-    buildCommand: pip install --upgrade pip && pip install -r backend/requirements.txt
-    startCommand: cd backend && uvicorn app:app --host 0.0.0.0 --port $PORT
+    rootDir: backend
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: APP_ENV
         value: production
-      - key: FRONTEND_URL
-        value: https://samriddhi.vercel.app
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -27,3 +29,15 @@ services:
         sync: false
       - key: META_WA_VERIFY_TOKEN
         value: samriddhi_meta_verify_token_2026
+
+  # ========================================================
+  # 2. SamriddhiAI React 19 Frontend Portal (Static Site)
+  # ========================================================
+  - type: static
+    name: samriddhiai-frontend
+    buildCommand: npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
