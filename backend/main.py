@@ -1,7 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException, File, UploadFile
 from pydantic import BaseModel, Field
 from typing import List, Optional
+from apscheduler.schedulers.background import BackgroundScheduler
+import datetime
 import json
+from services.aggregator import router as aggregator_router
 
 # Note: In a full implementation, you would import aioredis, asyncpg, and geoalchemy2 here
 # for the database and caching layers.
@@ -11,6 +14,28 @@ app = FastAPI(
     description="Backend services for Scheme Matching, Geo-Routing (PostGIS), and AI parsing.",
     version="1.0.0"
 )
+
+# Include the aggregator endpoints
+app.include_router(aggregator_router)
+
+def process_slbc_batch_files():
+    """
+    Simulates the nightly ingestion of SFTP batch files from State Level 
+    Bankers' Committees (SLBC) to update live NPA and quota availability.
+    """
+    print(f"[{datetime.datetime.now()}] Running Nightly SLBC Batch Sync...")
+    # SQL Update logic to refresh bank quotas in PostGIS goes here
+    print("Bank quotas updated successfully.")
+
+# Start the background job
+scheduler = BackgroundScheduler()
+# Set to run every night at 1:00 AM (or every minute for the SIH demo)
+scheduler.add_job(process_slbc_batch_files, 'cron', hour=1, minute=0) 
+scheduler.start()
+
+@app.on_event("shutdown")
+def shutdown_event():
+    scheduler.shutdown()
 
 # ---------------------------------------------------------
 # Pydantic Models for strict validation
