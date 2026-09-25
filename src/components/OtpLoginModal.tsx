@@ -12,8 +12,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Phone, Shield, Loader2, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'https://samriddhi-api.onrender.com';
+import { API_BASE } from '../utils/apiConfig';
 
 interface OtpLoginModalProps {
   isOpen: boolean;
@@ -83,6 +82,7 @@ export const OtpLoginModal: React.FC<OtpLoginModalProps> = ({
       const response = await fetch(`${API_BASE}/api/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ mobile }),
       });
 
@@ -122,6 +122,7 @@ export const OtpLoginModal: React.FC<OtpLoginModalProps> = ({
       const response = await fetch(`${API_BASE}/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ mobile, otp }),
       });
 

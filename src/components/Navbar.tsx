@@ -9,13 +9,16 @@ import {
   VolumeX,
   Cpu,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  Landmark
 } from 'lucide-react';
 import { Language, TranslationStrings } from '../utils/translations';
 
+export type AppTab = 'recommender' | 'calculator' | 'locator' | 'ekyc' | 'banker' | 'dossier';
+
 interface NavbarProps {
-  currentTab: 'recommender' | 'calculator' | 'locator' | 'dossier';
-  setCurrentTab: (tab: 'recommender' | 'calculator' | 'locator' | 'dossier') => void;
+  currentTab: AppTab;
+  setCurrentTab: (tab: AppTab) => void;
   lang: Language;
   setLang: (lang: Language) => void;
   t: TranslationStrings;
@@ -36,58 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   return (
     <>
-      {/* Tricolor National Stripe */}
-      <div className="gov-top-stripe" />
-
-      {/* Second thin navy accent stripe for authentic gov-portal depth */}
-      <div style={{ height: '2px', background: 'linear-gradient(90deg, #0f172a 0%, #0369a1 50%, #0f172a 100%)' }} />
-
-      {/* Official Government Utility Header Bar */}
-      <div className="gov-utility-bar">
-        <div className="app-container gov-utility-content">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontWeight: 700, color: '#f8fafc', letterSpacing: '0.02em' }}>
-              भारत सरकार | Government of India
-            </span>
-            <span style={{ color: '#64748b' }}>•</span>
-            <span style={{ color: '#cbd5e1' }}>
-              सामाजिक न्याय एवं अधिकारिता मंत्रालय | Ministry of Social Justice & Empowerment
-            </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(250, 132, 50, 0.18)', border: '1px solid rgba(250, 132, 50, 0.4)', color: '#fdba74', padding: '1px 7px', borderRadius: '4px', fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.04em' }}>
-              डिजिटल इंडिया • DIGITAL INDIA
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <button style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '0 4px', cursor: 'pointer', fontSize: '0.65rem' }}>A-</button>
-              <button style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '0 4px', cursor: 'pointer', fontSize: '0.75rem' }}>A</button>
-              <button style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '0 4px', cursor: 'pointer', fontSize: '0.85rem' }}>A+</button>
-            </div>
-            <span style={{ color: '#64748b' }}>|</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <button onClick={() => setLang('en')} style={{ background: lang === 'en' ? '#38bdf8' : 'transparent', border: '1px solid #334155', color: lang === 'en' ? '#0f172a' : '#cbd5e1', padding: '1px 6px', cursor: 'pointer', fontSize: '0.65rem', borderRadius: '2px' }}>English</button>
-              <button onClick={() => setLang('hi')} style={{ background: lang === 'hi' ? '#38bdf8' : 'transparent', border: '1px solid #334155', color: lang === 'hi' ? '#0f172a' : '#cbd5e1', padding: '1px 6px', cursor: 'pointer', fontSize: '0.65rem', borderRadius: '2px' }}>हिन्दी</button>
-            </div>
-            <span style={{ color: '#64748b' }}>|</span>
-            <span style={{ color: '#94a3b8' }}>
-              NSFDC Concessional Lending Registry
-            </span>
-            <span style={{ color: '#64748b' }}>•</span>
-            {onOpenAiSettings && (
-              <button
-                onClick={onOpenAiSettings}
-                style={{ background: 'transparent', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}
-              >
-                <Cpu size={12} />
-                <span>स्मार्ट आवेदन (AI Portal)</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Government Portal Header */}
+      {/* Sticky Primary Navigation Header */}
       <header className="navbar">
         <div className="app-container nav-content">
           <div className="brand-wrapper" onClick={() => setCurrentTab('recommender')}>
@@ -145,6 +97,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               {t.navLocator}
             </button>
             <button
+              className={`nav-btn ${currentTab === 'ekyc' ? 'active' : ''}`}
+              onClick={() => setCurrentTab('ekyc')}
+              style={{ borderBottom: currentTab === 'ekyc' ? '2px solid #FF9933' : 'none' }}
+            >
+              <ShieldCheck size={16} className="text-[#FF9933]" />
+              <span>{lang === 'hi' ? 'आधार e-KYC' : 'Offline e-KYC'}</span>
+            </button>
+            <button
+              className={`nav-btn ${currentTab === 'banker' ? 'active' : ''}`}
+              onClick={() => setCurrentTab('banker')}
+              style={{ borderBottom: currentTab === 'banker' ? '2px solid #38bdf8' : 'none' }}
+            >
+              <Landmark size={16} className="text-sky-400" />
+              <span>{lang === 'hi' ? 'शाखा प्रबंधक (Banker)' : 'Banker Portal'}</span>
+            </button>
+            <button
               className={`nav-btn ${currentTab === 'dossier' ? 'active' : ''}`}
               onClick={() => setCurrentTab('dossier')}
             >
@@ -154,6 +122,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {onOpenAiSettings && (
+              <button
+                onClick={onOpenAiSettings}
+                className="voice-trigger-btn"
+                style={{ borderColor: '#0284c7', color: '#0284c7' }}
+                title="Configure Gemini & AI Multi-Provider settings"
+              >
+                <Cpu size={14} />
+                <span>AI इंजन (AI Config)</span>
+              </button>
+            )}
+
             {/* Voice Assistant Toggle */}
             <button
               onClick={toggleVoice}
@@ -161,7 +141,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Citizen Assistance Desk"
             >
               {isVoiceActive ? <VolumeX size={15} /> : <Volume2 size={15} color="#0284c7" />}
-              <span>{isVoiceActive ? 'Stop Voice' : 'नागरिक सहायता कक्ष (Citizen Assistance Desk)'}</span>
+              <span>{isVoiceActive ? 'Stop Voice' : 'नागरिक सहायता कक्ष (Citizen Voice)'}</span>
             </button>
 
             {/* Language Selector */}

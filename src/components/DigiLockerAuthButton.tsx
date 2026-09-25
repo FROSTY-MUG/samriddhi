@@ -7,8 +7,7 @@
  */
 import React, { useState } from 'react';
 import { ShieldCheck, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'https://samriddhi-api.onrender.com';
+import { API_BASE } from '../utils/apiConfig';
 
 interface VerifiedProfile {
   verification_id: string;

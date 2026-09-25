@@ -25,9 +25,21 @@ import { DocumentOcrModal } from './components/DocumentOcrModal';
 import { AIConfigModal } from './components/AIConfigModal';
 import { getStoredAIConfig } from './utils/aiMultiProviderRAG';
 import { speakInstant, speakWithGeminiOptimized, stopAllVoice } from './utils/voiceService';
+import { GovTopBar } from './components/GovTopBar';
+import { GovHeader } from './components/GovHeader';
+import { MarqueeTicker } from './components/MarqueeTicker';
+import { VoiceInputBar } from './components/VoiceInputBar';
+import { VisualTradeCards } from './components/VisualTradeCards';
+import { FinancialModeling } from './components/FinancialModeling';
+import { BankRouterMap } from './components/BankRouterMap';
+import { DigiLockerUpload } from './components/DigiLockerUpload';
+import { OfflineKYCUpload } from './components/OfflineKYCUpload';
+import { BankerDashboard } from './components/BankerDashboard';
+import { GovLayout } from './components/GovLayout';
+import { AppTab } from './components/Navbar';
 
 export function App() {
-  const [currentTab, setCurrentTab] = useState<'recommender' | 'calculator' | 'locator' | 'dossier'>('recommender');
+  const [currentTab, setCurrentTab] = useState<AppTab>('recommender');
   const [lang, setLang] = useState<Language>('en');
   const [isVoiceActive, setIsVoiceActive] = useState<boolean>(false);
   const [voiceStatusText, setVoiceStatusText] = useState<string>('');
@@ -142,8 +154,20 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Navigation */}
+    <div className="min-h-screen bg-slate-100 flex flex-col">
+      {/* 1. GIGW 3.0 Official Government Top Bar with Font Resizing & Tricolor */}
+      <GovTopBar
+        currentLang={lang === 'hi' ? 'hi' : 'en'}
+        onLangToggle={(l) => setLang(l as Language)}
+      />
+
+      {/* 2. Official National Emblem Header with MoSJE / NSFDC Typography */}
+      <GovHeader lang={lang === 'hi' ? 'hi' : 'en'} />
+
+      {/* 3. Statutory Notice Ticker with Pause-on-Hover Accessibility */}
+      <MarqueeTicker lang={lang === 'hi' ? 'hi' : 'en'} />
+
+      {/* 4. Navigation */}
       <Navbar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
@@ -163,58 +187,117 @@ export function App() {
         t={t}
       />
 
-      {/* Hero Section */}
-      <HeroSection
-        t={t}
-        lang={lang}
-        onExploreRecommender={() => {
-          setCurrentTab('recommender');
-          document.getElementById('recommender-section')?.scrollIntoView({ behavior: 'smooth' });
-        }}
-        onExploreCalculator={() => {
-          setCurrentTab('calculator');
-          document.getElementById('calculator-section')?.scrollIntoView({ behavior: 'smooth' });
-        }}
-      />
+      {/* Hero Section (only on main tabs) */}
+      {(currentTab === 'recommender' || currentTab === 'calculator') && (
+        <HeroSection
+          t={t}
+          lang={lang}
+          onExploreRecommender={() => {
+            setCurrentTab('recommender');
+            document.getElementById('recommender-section')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          onExploreCalculator={() => {
+            setCurrentTab('calculator');
+            document.getElementById('calculator-section')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+        />
+      )}
 
-      {/* Main Tab Content */}
-      <main>
+      {/* Main Content Area */}
+      <main id="main-content" className="flex-1">
         {currentTab === 'recommender' && (
-          <RecommenderSection
-            t={t}
-            lang={lang}
-            onSelectSchemeForCalc={handleSelectSchemeForCalc}
-            onSelectSchemeForLocator={handleSelectSchemeForLocator}
-            onViewDocuments={(scheme) => setSelectedSchemeForDocs(scheme)}
-            onSpeakText={(text) => {
-              void speakText(text);
-            }}
-            isSpeaking={isVoiceActive}
-            onOpenOcr={() => setIsOcrOpen(true)}
-            onOpenAiSettings={() => setIsAiSettingsOpen(true)}
-          />
+          <div className="space-y-6 max-w-7xl mx-auto px-4 py-4">
+            {/* 1. Citizen Assistance Desk: Native Web Speech Voice Input Bar */}
+            <VoiceInputBar
+              lang={lang === 'hi' ? 'hi' : 'en'}
+              onParsedResult={(parsed) => {
+                console.log('Voice extracted parameters:', parsed);
+              }}
+            />
+
+            {/* 2. Concrete Flat Visual Trade Cards (Low-Literacy Friendly) */}
+            <VisualTradeCards
+              lang={lang === 'hi' ? 'hi' : 'en'}
+              onSelectTrade={(trade) => {
+                console.log('Selected Trade:', trade);
+              }}
+            />
+
+            <RecommenderSection
+              t={t}
+              lang={lang}
+              onSelectSchemeForCalc={handleSelectSchemeForCalc}
+              onSelectSchemeForLocator={handleSelectSchemeForLocator}
+              onViewDocuments={(scheme) => setSelectedSchemeForDocs(scheme)}
+              onSpeakText={(text) => {
+                void speakText(text);
+              }}
+              isSpeaking={isVoiceActive}
+              onOpenOcr={() => setIsOcrOpen(true)}
+              onOpenAiSettings={() => setIsAiSettingsOpen(true)}
+            />
+          </div>
+        )}
+
+        {currentTab === 'ekyc' && (
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <DigiLockerUpload
+              lang={lang === 'hi' ? 'hi' : 'en'}
+              onVerificationComplete={(profile) => {
+                if (profile?.full_name) {
+                  setApplicantName(profile.full_name);
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {currentTab === 'banker' && (
+          <div className="py-6">
+            <BankerDashboard />
+          </div>
         )}
 
         {currentTab === 'calculator' && (
-          <CalculatorSection
-            t={t}
-            lang={lang}
-            prefillScheme={activeSchemeForCalc}
-            initialCost={calcPrefillParams.cost}
-            initialRate={calcPrefillParams.rate}
-            initialTenure={calcPrefillParams.tenure}
-            initialMoratorium={calcPrefillParams.moratorium}
-            onNavigateToLocator={() => setCurrentTab('locator')}
-          />
+          <div className="space-y-6 max-w-7xl mx-auto px-4 py-4">
+            {/* Dynamic EMI & Scheme Visualizer: 90% Govt vs 10% Margin + Moratorium */}
+            <FinancialModeling
+              lang={lang === 'hi' ? 'hi' : 'en'}
+              initialCost={calcPrefillParams.cost}
+              initialRate={calcPrefillParams.rate}
+              initialMoratorium={calcPrefillParams.moratorium}
+              initialTenureYears={calcPrefillParams.tenure}
+            />
+
+            <CalculatorSection
+              t={t}
+              lang={lang}
+              prefillScheme={activeSchemeForCalc}
+              initialCost={calcPrefillParams.cost}
+              initialRate={calcPrefillParams.rate}
+              initialTenure={calcPrefillParams.tenure}
+              initialMoratorium={calcPrefillParams.moratorium}
+              onNavigateToLocator={() => setCurrentTab('locator')}
+            />
+          </div>
         )}
 
         {currentTab === 'locator' && (
-          <PartnerLocatorSection
-            t={t}
-            lang={lang}
-            selectedScheme={activeSchemeForLocator}
-            onRouteToPartner={handleRouteToPartner}
-          />
+          <div className="space-y-6 max-w-7xl mx-auto px-4 py-4">
+            {/* React-Leaflet PostGIS Geo-Spatial Routing Map & Token */}
+            <BankRouterMap
+              lang={lang === 'hi' ? 'hi' : 'en'}
+              schemeName={activeSchemeForLocator?.name || 'Mahila Samriddhi Yojana (MSY)'}
+              loanAmount={calcPrefillParams.cost * 0.9}
+            />
+
+            <PartnerLocatorSection
+              t={t}
+              lang={lang}
+              selectedScheme={activeSchemeForLocator}
+              onRouteToPartner={handleRouteToPartner}
+            />
+          </div>
         )}
 
         {currentTab === 'dossier' && (

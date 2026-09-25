@@ -12,8 +12,19 @@ dist
 dist-ssr
 .env
 .env.*
+**/.env
+**/.env.*
 !.env.example
 *.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Vercel
+.vercel
 
 # Editor directories and files
 .vscode/*

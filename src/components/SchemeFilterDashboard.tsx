@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
+import { API_BASE } from '../utils/apiConfig';
 
 interface Scheme {
   scheme_id: string;
@@ -31,9 +32,7 @@ export const SchemeFilterDashboard: React.FC = () => {
         gender: formData.gender
       });
 
-      // Point to the live Render backend
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://samriddhi-api.onrender.com';
-      const response = await fetch(`${baseUrl}/api/v1/schemes/filter?${params}`);
+      const response = await fetch(`${API_BASE}/api/v1/schemes/filter?${params}`);
       
       if (!response.ok) {
         // Fallback for SIH demo if the python backend is not currently spinning

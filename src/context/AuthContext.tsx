@@ -9,8 +9,7 @@
  *   4. Handles HTTP 401 (token expired) and HTTP 429 (rate limited) globally
  */
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'https://samriddhi-api.onrender.com';
+import { API_BASE } from '../utils/apiConfig';
 
 // ========================= Types =========================
 
@@ -90,7 +89,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       }
       headers.set('Content-Type', 'application/json');
 
-      const response = await fetch(fullUrl, { ...options, headers });
+      const response = await fetch(fullUrl, {
+        ...options,
+        headers,
+        credentials: 'include',
+      });
 
       // Handle 401: Token expired or invalid
       if (response.status === 401) {

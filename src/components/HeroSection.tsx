@@ -20,8 +20,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     <section className="hero-section">
       {/* Important Notices Ticker */}
       <div style={{ background: '#fef08a', borderBottom: '1px solid #facc15', color: '#b45309', padding: '6px 0', fontSize: '0.9rem', fontWeight: 700, marginBottom: '24px' }}>
-        <div className="app-container">
-          <marquee scrollamount="5">Important Notices: Ensure your annual family income is below ₹5.00 Lakhs to qualify for 90% concessional credit at 5.0% - 8.0% p.a. • No direct applications are entertained by NSFDC; all routing is via authorized Channel Partners.</marquee>
+        <div className="app-container overflow-hidden">
+          <div className="whitespace-nowrap overflow-hidden text-ellipsis">
+            Important Notices: Ensure your annual family income is below ₹5.00 Lakhs to qualify for 90% concessional credit at 5.0% - 8.0% p.a. • No direct applications are entertained by NSFDC; all routing is via authorized Channel Partners.
+          </div>
         </div>
       </div>
       <div className="app-container">

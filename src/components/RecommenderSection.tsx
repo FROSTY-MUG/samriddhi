@@ -150,8 +150,9 @@ export const RecommenderSection: React.FC<RecommenderSectionProps> = ({
       setRagResult(res);
       setProfile(prev => ({ ...prev, ...res.profile }));
       confetti({ particleCount: 50, spread: 60, origin: { y: 0.5 } });
-    } catch (e) {
-      console.error(e);
+    } catch (e: unknown) {
+      console.error('AI NLP match failed:', e);
+      setRagResult(null);
     } finally {
       setIsAiProcessing(false);
     }

@@ -1,3 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gov-navy: #002244;
+  --color-gov-slate: #1F2937;
+  --color-gov-saffron: #FF9933;
+  --color-gov-green: #138808;
+  --color-gov-white: #FFFFFF;
+  --color-gov-gray: #F8FAFC;
+  --color-gov-border: #CBD5E1;
+}
+
 :root {
   --font-primary: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -644,6 +656,68 @@ h1, h2, h3, h4, .font-display {
   animation: spin 1s linear infinite;
 }
 
+/* ========================================================
+   GIGW 3.0 / UX4G High Contrast Accessibility Mode
+   ======================================================== */
+body.gov-high-contrast {
+  background-color: #000000 !important;
+  color: #ffff00 !important; /* High-visibility statutory yellow */
+}
+
+body.gov-high-contrast * {
+  border-color: #ffff00 !important;
+}
+
+body.gov-high-contrast .navbar,
+body.gov-high-contrast .glass-card,
+body.gov-high-contrast .stat-card,
+body.gov-high-contrast .scheme-card,
+body.gov-high-contrast .modal-content,
+body.gov-high-contrast header,
+body.gov-high-contrast footer,
+body.gov-high-contrast .bg-white,
+body.gov-high-contrast .bg-slate-50,
+body.gov-high-contrast .bg-slate-100 {
+  background-color: #050505 !important;
+  color: #ffff00 !important;
+  border: 2px solid #ffff00 !important;
+}
+
+body.gov-high-contrast h1,
+body.gov-high-contrast h2,
+body.gov-high-contrast h3,
+body.gov-high-contrast h4,
+body.gov-high-contrast h5,
+body.gov-high-contrast h6,
+body.gov-high-contrast p,
+body.gov-high-contrast span,
+body.gov-high-contrast label,
+body.gov-high-contrast button {
+  color: #ffffff !important;
+}
+
+body.gov-high-contrast a,
+body.gov-high-contrast .text-gov-navy,
+body.gov-high-contrast .text-primary,
+body.gov-high-contrast .stat-value {
+  color: #ffff00 !important;
+}
+
+body.gov-high-contrast .btn-primary,
+body.gov-high-contrast .bg-gov-navy {
+  background-color: #ffff00 !important;
+  color: #000000 !important;
+  font-weight: 800 !important;
+}
+
+body.gov-high-contrast input,
+body.gov-high-contrast select,
+body.gov-high-contrast textarea {
+  background-color: #111111 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffff00 !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .nav-links {
@@ -656,3 +730,4 @@ h1, h2, h3, h4, .font-display {
     grid-template-columns: 1fr 1fr;
   }
 }
+

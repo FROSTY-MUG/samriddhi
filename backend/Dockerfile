@@ -32,7 +32,7 @@ EXPOSE 8000
 
 # Production CMD: Gunicorn manages Uvicorn workers for multi-core concurrency
 # Falls back to PORT env var injected by Railway/Render, defaults to 8000
-CMD gunicorn app:app \
+CMD gunicorn main:app \
     --workers 2 \
     --worker-class uvicorn.workers.UvicornWorker \
     --bind 0.0.0.0:${PORT:-8000} \
