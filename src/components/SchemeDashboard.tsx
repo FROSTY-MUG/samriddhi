@@ -8,8 +8,8 @@ export default function SchemeDashboard() {
   const fetchLiveSchemes = async () => {
     setLoading(true);
     try {
-      // Replace localhost with your deployed FastAPI URL
-      const response = await fetch(`http://localhost:8000/api/v1/schemes/filter?amount=${formData.amount}&income=${formData.income}&category=${formData.category}`);
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://samriddhi-api.onrender.com';
+      const response = await fetch(`${baseUrl}/api/v1/schemes/filter?amount=${formData.amount}&income=${formData.income}&category=${formData.category}`);
       const data = await response.json();
       setSchemes(data.results || []);
     } catch (error) {

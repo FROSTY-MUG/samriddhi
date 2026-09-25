@@ -31,8 +31,9 @@ export const SchemeFilterDashboard: React.FC = () => {
         gender: formData.gender
       });
 
-      // Using the mock endpoint for the frontend presentation, or catching if the backend isn't running
-      const response = await fetch(`http://localhost:8000/api/v1/schemes/filter?${params}`);
+      // Point to the live Render backend
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://samriddhi-api.onrender.com';
+      const response = await fetch(`${baseUrl}/api/v1/schemes/filter?${params}`);
       
       if (!response.ok) {
         // Fallback for SIH demo if the python backend is not currently spinning
