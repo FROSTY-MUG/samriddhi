@@ -59,6 +59,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <button style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '0 4px', cursor: 'pointer', fontSize: '0.65rem' }}>A-</button>
+              <button style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '0 4px', cursor: 'pointer', fontSize: '0.75rem' }}>A</button>
+              <button style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '0 4px', cursor: 'pointer', fontSize: '0.85rem' }}>A+</button>
+            </div>
+            <span style={{ color: '#64748b' }}>|</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button onClick={() => setLang('en')} style={{ background: lang === 'en' ? '#38bdf8' : 'transparent', border: '1px solid #334155', color: lang === 'en' ? '#0f172a' : '#cbd5e1', padding: '1px 6px', cursor: 'pointer', fontSize: '0.65rem', borderRadius: '2px' }}>English</button>
+              <button onClick={() => setLang('hi')} style={{ background: lang === 'hi' ? '#38bdf8' : 'transparent', border: '1px solid #334155', color: lang === 'hi' ? '#0f172a' : '#cbd5e1', padding: '1px 6px', cursor: 'pointer', fontSize: '0.65rem', borderRadius: '2px' }}>हिन्दी</button>
+            </div>
+            <span style={{ color: '#64748b' }}>|</span>
             <span style={{ color: '#94a3b8' }}>
               NSFDC Concessional Lending Registry
             </span>
@@ -69,7 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 style={{ background: 'transparent', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}
               >
                 <Cpu size={12} />
-                <span>AI RAG Engine Active</span>
+                <span>स्मार्ट आवेदन (AI Portal)</span>
               </button>
             )}
           </div>
@@ -147,10 +158,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={toggleVoice}
               className={`voice-trigger-btn ${isVoiceActive ? 'speaking' : ''}`}
-              title="Voice Guide in your language"
+              title="Citizen Assistance Desk"
             >
               {isVoiceActive ? <VolumeX size={15} /> : <Volume2 size={15} color="#0284c7" />}
-              <span>{isVoiceActive ? 'Stop Voice' : 'Voice Guide'}</span>
+              <span>{isVoiceActive ? 'Stop Voice' : 'नागरिक सहायता कक्ष (Citizen Assistance Desk)'}</span>
             </button>
 
             {/* Language Selector */}

@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # The Core Database with PostGIS extension for Geo-spatial queries
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: samriddhiai_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: samriddhiai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Redis Cache for scheme details and rapid queries
+  redis:
+    image: redis:7-alpine
+    container_name: samriddhiai_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
