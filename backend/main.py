@@ -18,6 +18,10 @@ app = FastAPI(
 # Include the aggregator endpoints
 app.include_router(aggregator_router)
 
+# Include the schemes filter endpoints
+from routers.schemes import router as schemes_router
+app.include_router(schemes_router)
+
 def process_slbc_batch_files():
     """
     Simulates the nightly ingestion of SFTP batch files from State Level 
