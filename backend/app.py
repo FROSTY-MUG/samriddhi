@@ -22,6 +22,10 @@ from contextlib import asynccontextmanager
 from config import get_settings
 from routers.auth import router as auth_router
 from routers.schemes import router as schemes_router
+from routers.kyc import router as kyc_router
+from routers.officer import router as officer_router
+from routers.whatsapp_bot import router as whatsapp_router
+from routers.audit import router as audit_router
 from services.aggregator import router as aggregator_router
 
 settings = get_settings()
@@ -92,6 +96,18 @@ app.include_router(schemes_router)
 
 # Aggregator: Background scraping of government portals
 app.include_router(aggregator_router)
+
+# KYC: DigiLocker / API Setu mock integration
+app.include_router(kyc_router)
+
+# Officer: Nodal Officer / Bank Manager dashboard
+app.include_router(officer_router)
+
+# WhatsApp: Twilio webhook for conversational bot
+app.include_router(whatsapp_router)
+
+# Audit: Immutable compliance logging
+app.include_router(audit_router)
 
 
 # ========================= Root & Health Endpoints =========================
