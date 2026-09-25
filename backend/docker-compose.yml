@@ -1,7 +1,40 @@
+# ============================================================
+# SamriddhiAI — Local Development Docker Compose
+# ============================================================
+# Spins up the full stack locally:
+#   1. FastAPI backend (with hot-reload)
+#   2. PostgreSQL + PostGIS (spatial database)
+#   3. Redis (OTP store + rate limiter backend)
+# ============================================================
+
 version: '3.8'
 
 services:
-  # The Core Database with PostGIS extension for Geo-spatial queries
+  # ---------- FastAPI Backend ----------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: samriddhiai_api
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:securepassword@db:5432/samriddhiai
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=local-dev-secret-change-in-prod
+      - SMS_PROVIDER=mock
+      - FRONTEND_URL=http://localhost:5173
+    depends_on:
+      - db
+      - redis
+    # Override CMD for hot-reload during development
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app  # Mount source code for live reload
+    restart: unless-stopped
+
+  # ---------- PostgreSQL + PostGIS ----------
   db:
     image: postgis/postgis:15-3.3
     container_name: samriddhiai_db
@@ -13,9 +46,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Auto-run the migration on first startup
+      - ./migrations/001_full_schema.sql:/docker-entrypoint-initdb.d/001_full_schema.sql
     restart: unless-stopped
 
-  # Redis Cache for scheme details and rapid queries
+  # ---------- Redis (OTP + Rate Limiter) ----------
   redis:
     image: redis:7-alpine
     container_name: samriddhiai_redis

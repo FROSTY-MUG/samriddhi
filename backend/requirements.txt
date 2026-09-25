@@ -1,19 +1,41 @@
+"""
+Production requirements for SamriddhiAI FastAPI Backend.
+"""
+# Core Framework
 fastapi==0.103.2
-uvicorn==0.23.2
+uvicorn[standard]==0.23.2
+gunicorn==21.2.0
 pydantic==2.4.2
+pydantic-settings==2.1.0
 python-multipart==0.0.6
-# Database & GIS
-geoalchemy2==0.14.1
+
+# Database (Async PostgreSQL via SQLAlchemy)
 SQLAlchemy==2.0.21
 asyncpg==0.28.0
-# Caching
-redis==5.0.1
+geoalchemy2==0.14.1
+
+# Authentication
+PyJWT==2.8.0
+
+# Rate Limiting
+slowapi==0.1.9
+
+# Redis (OTP Store + Rate Limiter Backend)
+redis[hiredis]==5.0.1
+
+# Supabase Client (for direct table operations)
+supabase==2.0.3
+
+# Scraper / Aggregator
+beautifulsoup4==4.12.2
+httpx==0.25.0
+
+# Background Scheduler
+apscheduler==3.10.4
+
 # PDF Generation
 reportlab==4.0.4
-# AI / OCR Dependencies (conceptual)
-google-cloud-vision==3.4.4
-google-generativeai==0.3.1
-# Aggregator Dependencies
-beautifulsoup4
-httpx
-apscheduler
+
+# AI / OCR (conceptual — install as needed)
+# google-cloud-vision==3.4.4
+# google-generativeai==0.3.1
